@@ -604,7 +604,9 @@ function makeDb(){
   const snap = rows => ({docs: rows.map(r=>({id:r.id, data:()=>r.data||{}}))});
   async function load(p){
     if(p.kind==="ej"){ const {data,error}=await SB.from("ejercicios").select("id,data"); if(error) throw error; return data; }
-    if(p.kind==="team"){ const {data,error}=await SB.from("docs").select("user_id,data,updated_at").eq("col","perfil").eq("id","main").neq("user_id",ME); if(error) throw error; return data.map(r=>({id:r.user_id, data:r.data})); }
+    if(p.kind==="team"){ const {data,error}=await SB.from("docs").select("user_id,data,updated_at").eq("col","perfil").eq("id","main").neq("user_id",ME); if(error) throw error;
+      let coaches=new Set(); try{ const {data:cs}=await SB.from("coaches").select("user_id"); (cs||[]).forEach(c=>coaches.add(c.user_id)); }catch(e){}
+      return data.filter(r=>!coaches.has(r.user_id)).map(r=>({id:r.user_id, data:r.data})); }
     const {data,error}=await SB.from("docs").select("id,data").eq("user_id",p.uid).eq("col",p.col); if(error) throw error; return data;
   }
   const refresh = key => subs.filter(s=>s.key===key || (key.endsWith("|perfil") && s.key==="team")).forEach(s=>load(s.p).then(r=>s.fn(snap(r))).catch(e=>s.err&&s.err(e)));
