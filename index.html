@@ -308,7 +308,7 @@ nav.pnav{display:none} .planmode nav.pnav{display:block}
 .segbar button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;padding:10px;border-radius:10px;cursor:pointer}
 .segbar button.on{background:var(--accent);color:var(--accent-ink)}
 .swatches{display:flex;flex-wrap:wrap;gap:10px}
-.sw{width:40px;height:40px;border-radius:50%;background:var(--c);border:3px solid transparent;cursor:pointer}
+.sw{flex:none;padding:0;min-width:40px;width:40px;height:40px;border-radius:50%;background:var(--c);border:3px solid transparent;cursor:pointer}
 .sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--c)}
 .lesion,.pnote{display:flex;flex-direction:column;gap:4px;border-radius:18px;padding:12px 14px}
 .lesion{background:color-mix(in srgb,var(--red) 14%,var(--bg));border:1px solid var(--red)} .lesion b{color:var(--red)}
@@ -720,7 +720,7 @@ async function connectDb(){
   SB.auth.onAuthStateChange(ev=>{ if(ev==="PASSWORD_RECOVERY") newPassScreen(); });
   let {data:{session}} = await SB.auth.getSession();
   if(!session) session = await authScreen();
-  ME = session.user.id; ROLE.uid=null; ROLE.base=""; ROLE.name=(session.user.user_metadata&&session.user.user_metadata.nombre)||"";
+  ME = session.user.id; ROLE.coach=false; ROLE.uid=null; ROLE.base=""; ROLE.name=(session.user.user_metadata&&session.user.user_metadata.nombre)||"";
   COLS.forEach(c=>state[c]=[]); renderAll();
   setTimeout(()=>{ if(!perfilLoaded){ perfilLoaded=true; renderAll(); } }, 12000);
   try{ const {data}=await SB.rpc("is_coach"); ROLE.coach=!!data; }catch(e){ ROLE.coach=false; }
@@ -734,7 +734,7 @@ async function connectDb(){
 }
 
 /* ---------- Perfil y cálculos ---------- */
-const profile = () => Object.assign({nombre:"Pick", kcal:2000, mc:40, mg:30, mp:30}, state.perfil.find(x=>x.id==="main")||{});
+const profile = () => Object.assign({nombre:"", kcal:2000, mc:40, mg:30, mp:30}, state.perfil.find(x=>x.id==="main")||{});
 async function saveProfile(patch){ const p=profile(); const {id,...rest}=p; try{ await setDoc("perfil","main",{...rest,...patch}); }catch(e){ saveErr(e); } }
 const carga = s => (s.ejercicios||[]).reduce((a,e)=>a+(e.modo==="tiempo"?0:(e.series||[]).reduce((b,x)=>b+(num(x.kg)||0)*(num(x.reps)||0),0)),0);
 const TIME_RE=/segundo|plancha|plank|isometr|hollow|wall-sit|colgad|dead-hang|sentadilla-en-pared/;
@@ -1026,7 +1026,7 @@ function renderPerfil(v){
     </section>
   </div>`;
   const nb=$("#pNameBtn"); if(nb) nb.onclick=()=>{ ui.editName=true; renderAll(); const i=$("#pName"); i.focus(); i.select(); };
-  const ok=$("#pNameOk"); if(ok){ const done=()=>{ const n=$("#pName").value.trim()||"Pick"; ui.editName=false; saveProfile({nombre:n}); renderAll(); }; ok.onclick=done; $("#pName").onkeydown=e=>{ if(e.key==="Enter") done(); }; }
+  const ok=$("#pNameOk"); if(ok){ const done=()=>{ const n=$("#pName").value.trim()||profile().nombre||""; ui.editName=false; saveProfile({nombre:n}); renderAll(); }; ok.onclick=done; $("#pName").onkeydown=e=>{ if(e.key==="Enter") done(); }; }
   $("#pMet").onclick=()=>openMetricas();
   $("#pPlan").onclick=()=>openOnboarding(true);
   $("#pCanal").onchange=e=>{ saveProfile({canal:e.target.value}); toast("Canal guardado"); };
