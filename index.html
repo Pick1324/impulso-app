@@ -291,8 +291,25 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mu
 .lvup{display:flex;flex-direction:column;gap:6px;background:color-mix(in srgb,var(--green) 14%,var(--bg));border:1px solid var(--green);border-radius:16px;padding:12px}
 .lvup b{color:var(--green)}
 .trk .grow{flex:1;min-width:0}
-.planmode nav.nav,.planmode #fab,.planmode #fbBtn{display:none!important}
-.planmode .wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+.planmode nav.nav:not(.pnav),.planmode #fab,.planmode #fbBtn{display:none!important}
+nav.pnav{display:none} .planmode nav.pnav{display:block}
+.teamname{display:none;flex-direction:column;line-height:1.05}
+.teamname b{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.4px}
+.teamname small{font-size:12px;color:var(--muted)}
+.planmode .brand h1{display:none} .planmode .teamname{display:flex}
+.wstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.wd i{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--accent-ink)}
+.wd.plan i{border-color:var(--accent)} .wd.ok i{background:var(--accent);border-color:var(--accent)}
+.wd.hoy span{color:var(--ink);font-weight:700} .wd.hoy i{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.phero h3{font-size:28px}
+.psec{margin:6px 0 0}
+.segbar{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.segbar button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;padding:10px;border-radius:10px;cursor:pointer}
+.segbar button.on{background:var(--accent);color:var(--accent-ink)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:40px;height:40px;border-radius:50%;background:var(--c);border:3px solid transparent;cursor:pointer}
+.sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--c)}
 .lesion,.pnote{display:flex;flex-direction:column;gap:4px;border-radius:18px;padding:12px 14px}
 .lesion{background:color-mix(in srgb,var(--red) 14%,var(--bg));border:1px solid var(--red)} .lesion b{color:var(--red)}
 .pnote{background:var(--card);border:1px solid var(--line)} .pnote b{color:var(--accent)}
@@ -306,6 +323,8 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mu
 .cqb{width:100%;background:none;border:0;border-top:1px solid var(--line);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
 .cqbox{border-color:var(--accent)}
 .cqq{margin:0;background:var(--bg);border-radius:12px;padding:10px 12px;line-height:1.4}
+.tlink{display:flex;flex-direction:column;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.tlink code{font-size:13px;color:var(--accent);word-break:break-all}
 .tgl{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
 .tgl input{width:22px;height:22px;accent-color:var(--red);margin-top:2px}
 .tgl span{display:flex;flex-direction:column} .tgl small{color:var(--muted)}
@@ -504,6 +523,7 @@ nav.nav button[aria-current="page"]{color:var(--accent)}
     <div class="brand">
       <svg viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="9" fill="var(--accent)"/><path d="M9 25l8-8 8 8" fill="none" stroke="var(--accent-ink)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 17l8-8 8 8" fill="none" stroke="var(--accent-ink)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>
       <h1>Impulso</h1>
+      <span class="teamname"><b id="teamName"></b><small>con Impulso</small></span>
     </div>
     <button class="fbbtn" id="fbBtn" aria-label="Anotar una mejora" title="Anotar una mejora"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg><span id="fbN" class="fbn" hidden></span></button>
   </header>
@@ -512,6 +532,11 @@ nav.nav button[aria-current="page"]{color:var(--accent)}
 </div>
 
 <button class="fab" id="fab" aria-label="Desafío del día"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>Desafío</span></button>
+<nav class="nav pnav" aria-label="Secciones de tu plan"><div class="in">
+  <button data-ptab="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>Plan</button>
+  <button data-ptab="juego"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Juego</button>
+  <button data-ptab="profe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Profe</button>
+</div></nav>
 <nav class="nav" aria-label="Secciones">
   <div class="in">
     <button data-tab="perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Perfil</button>
@@ -743,7 +768,7 @@ try{ const t=localStorage.getItem(LS+"-tab"); if(["perfil","entrena","nutri","eq
 document.querySelectorAll("nav.nav button").forEach(b=>b.onclick=()=>{ ui.tab=b.dataset.tab; try{ localStorage.setItem(LS+"-tab",ui.tab); }catch(e){} window.scrollTo(0,0); renderAll(); });
 
 function renderAll(){
-  document.querySelectorAll("nav.nav button").forEach(b=>{ if(b.dataset.tab===ui.tab) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  document.querySelectorAll("nav.nav:not(.pnav) button").forEach(b=>{ if(b.dataset.tab===ui.tab) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   const v=$("#view");
   const eqOn = ROLE.coach && db;
   if(typeof planMode==="function" && planMode()) renderPlanView(v); else
@@ -913,6 +938,7 @@ function openDeporte(){
 /* inicio: objetivo, nivel, días y deporte */
 let perfilLoaded=false;
 function openOnboarding(edit){
+  if(!edit && esEquipo()) return openOnbEquipo();
   ui.onbShown=true;
   const p=profile(), st={obj:p.obj||"salud", niv:p.niv||"medio", dias:p.dias||3, dep:p.dep||"ninguno", nombre:((state.perfil.find(x=>x.id==="main")||{}).nombre)||ROLE.name||""};
   openSheet({title: edit?"Mi plan":"Bienvenido a Impulso", footer:`${edit?`<button class="pill ghost" id="oNo">Cancelar</button>`:`<span></span>`}<button class="pill accent" id="oOk">${edit?"Guardar":"Empezar"}</button>`, render:B=>{
@@ -1956,7 +1982,8 @@ function daysSince(f){ return f ? Math.round((pd(today())-pd(f))/864e5) : null; 
 function lastSes(id){ const l=(team.ses[id]||[]).slice().sort(sesSort); return l[0]||null; }
 
 function renderEquipo(v){
-  const ps=Object.values(team.players).sort((a,b)=>{ const la=lastSes(a.id), lb=lastSes(b.id); return (lb?lb.fecha:"").localeCompare(la?la.fecha:"") || pName(a).localeCompare(pName(b)); });
+  const seg=ui.eqSeg||"jug", isJug=p=>!!p.equipo||!!PL.all[p.id], all0=Object.values(team.players), nJ=all0.filter(isJug).length, nC=all0.length-nJ;
+  const ps=all0.filter(p=>seg==="jug"?isJug(p):!isJug(p)).sort((a,b)=>{ const la=lastSes(a.id), lb=lastSes(b.id); return (lb?lb.fecha:"").localeCompare(la?la.fecha:"") || pName(a).localeCompare(pName(b)); });
   const m=monday(today()), wk=s=>s.fecha>=m;
   const hoyN=ps.filter(p=>(team.ses[p.id]||[]).some(s=>s.fecha===today())).length;
   const semN=ps.reduce((a,p)=>a+(team.ses[p.id]||[]).filter(wk).length,0);
@@ -1965,33 +1992,38 @@ function renderEquipo(v){
     (team.des[p.id]||[]).filter(x=>x.fecha>=lim && x.track).forEach(x=>feed.push({p,x,k:"d",t:x.creado||pd(x.fecha).getTime()})); });
   feed.sort((a,b)=>b.t-a.t);
   const how=`<details class="group how" ${ps.length?"":"open"}><summary><h3>Cómo sumar jugadoras</h3><span class="hint">${ps.length?"Ver":""}</span></summary>
+    <div class="tlink"><code id="tLk">${esc(teamLink())}</code><button class="pill accent sm" id="tCp">Copiar link del equipo</button></div>
     <ol class="steps">
-      <li>Pasale el link de Impulso a la jugadora (por WhatsApp, por ejemplo).</li>
+      <li>Pasale este <b>link del equipo</b> a la jugadora (por WhatsApp, por ejemplo). Con este link solo le pide nombre y apellido.</li>
       <li>Ella toca <b>Crear cuenta</b> y pone su nombre y apellido, su mail y una contraseña.</li>
       <li>La instala en el celular. En <b>iPhone</b>: Safari → Compartir → <b>Agregar a inicio</b>. En <b>Android</b>: Chrome → menú ⋮ → <b>Instalar app</b>.</li>
-      <li>Completa la bienvenida y aparece acá. Tocá su nombre → <b>Armar plan</b> (o <b>Copiar de otra</b>) y desde ese momento ve solo su plan, los minutos de juego y las consultas.</li>
+      <li>Pone su nombre y aparece acá. Tocá su nombre → <b>Armar plan</b> (o <b>Copiar de otra</b>) y desde ese momento ve solo su plan, los minutos de juego y las consultas.</li>
     </ol>
     <p class="hint">Cada jugadora ve solo sus datos. Vos ves los de todas. Los videos y fotos de ejercicios que cargás vos los ven todas, pero solo vos los podés cambiar.</p></details>`;
   if(!team.loaded){ v.innerHTML=`<section class="stack"><div class="intro"><p class="eyebrow">Entrenador</p><h2>Tu equipo</h2></div><p class="hint">Cargando jugadoras…</p></section>`; return; }
   v.innerHTML=`<section class="stack">
-    <div class="intro"><p class="eyebrow">Entrenador</p><h2>Tu equipo</h2></div>
+    <div class="intro"><p class="eyebrow">Entrenador</p><h2>${seg==="jug"?"Tu equipo":"Clientes"}</h2></div>
+    <div class="segbar" role="tablist"><button role="tab" data-seg="jug" class="${seg==="jug"?"on":""}" aria-selected="${seg==="jug"}">Jugadoras (${nJ})</button><button role="tab" data-seg="cli" class="${seg==="cli"?"on":""}" aria-selected="${seg==="cli"}">Clientes (${nC})</button></div>
     ${team.err?`<p class="hint">No se pudo leer el equipo. Revisá la conexión.</p>`:""}
-    <div class="mini"><div><b>${ps.length}</b><span>Jugadoras</span></div><div><b>${hoyN}</b><span>Entrenaron hoy</span></div><div><b>${semN}</b><span>Sesiones esta semana</span></div></div>
-    ${pending().length?`<section class="group cqbox"><div class="row" style="justify-content:space-between"><h3>Consultas sin responder</h3><span class="chip on">${pending().length}</span></div>${consultasHTML(pending().slice(0,10))}</section>`:""}
+    <div class="mini"><div><b>${ps.length}</b><span>${seg==="jug"?"Jugadoras":"Clientes"}</span></div><div><b>${hoyN}</b><span>Entrenaron hoy</span></div><div><b>${semN}</b><span>Sesiones esta semana</span></div></div>
+    ${seg==="jug" && pending().length?`<section class="group cqbox"><div class="row" style="justify-content:space-between"><h3>Consultas sin responder</h3><span class="chip on">${pending().length}</span></div>${consultasHTML(pending().slice(0,10))}</section>`:""}
     ${ps.length?`<section class="group"><h3>Actividad reciente</h3>
       ${feed.length?`<div class="feed">${feed.slice(0,25).map(f=> f.k==="s"
         ? `<div class="fi"><span class="dot ${f.s.tipo==="Deporte"?"s":""}"></span><p><b>${esc(pName(f.p))}</b> ${f.s.tipo==="Deporte"?"registró":"finalizó"} <b>${esc(sesTitle(f.s))}</b><br><small>${esc(sesMeta(f.s))}</small></p></div>`
         : (()=>{ const t=trk(f.x.track); if(!t) return ""; const lv=t.lv[f.x.nivel]||t.lv[0]; return `<div class="fi"><span class="dot d"></span><p><b>${esc(pName(f.p))}</b> hizo el desafío <b>${esc(t.g)}</b>: ${esc(fmtV(lv,f.x.v))}<br><small>${esc(lv.n)}${t.grips&&f.x.agarre?` · toma ${esc((t.grips.find(g=>g.id===f.x.agarre)||{}).n||"")}`.toLowerCase():""} · ${diaTxt(f.x.fecha)} · ${horaTxt(f.x.creado)} h</small></p></div>`; })()).join("")}</div>`
         :`<p class="hint">Nadie entrenó en los últimos 7 días.</p>`}</section>
-    <section class="stack"><h3 style="margin:6px 0 0">Jugadoras</h3>${ps.map(p=>{ const l=lastSes(p.id), ds=daysSince(l&&l.fecha), n=(team.ses[p.id]||[]).filter(wk).length, goal=p.dias||3;
+    <section class="stack"><h3 style="margin:6px 0 0">${seg==="jug"?"Jugadoras":"Clientes"}</h3>${ps.map(p=>{ const l=lastSes(p.id), ds=daysSince(l&&l.fecha), n=(team.ses[p.id]||[]).filter(wk).length, goal=p.dias||3;
       const st = !l ? ((team.des[p.id]||[]).length?`Por ahora solo hizo desafíos`:`<span class="warn">Todavía no entrenó</span>`) : ds===0 ? `<span class="ok">Entrenó hoy</span>` : ds>=4 ? `<span class="warn">Sin entrenar hace ${ds} días</span>` : `Último entreno ${ds===1?"ayer":`hace ${ds} días`}`;
       return `<button class="pl" data-pl="${esc(p.id)}"><div class="ph"><span class="av">${esc(initials(pName(p)))}</span><span class="nm"><b>${esc(pName(p))}</b><small>${st}${p.dep&&p.dep!=="ninguno"?` · ${esc(depName(p.dep))}`:""}</small><small>${planStatus(p.id)}</small></span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></div>
         <div class="wkbar"><i style="width:${Math.min(100,n/goal*100)}%"></i></div><small class="hint">Semana: ${n} de ${goal} sesiones</small></button>`; }).join("")}</section>`
-    :`<div class="empty"><b>Todavía no hay jugadoras</b><span class="hint">Aparecen acá apenas crean su cuenta y completan la bienvenida.</span></div>`}
-    ${how}
+    :`<div class="empty"><b>${seg==="jug"?"Todavía no hay jugadoras":"Todavía no hay clientes"}</b><span class="hint">${seg==="jug"?"Aparecen acá cuando entran con el link del equipo, o cuando a alguien le armás un plan.":"Acá aparecen las personas que usan Impulso con el link común."}</span></div>`}
+    ${seg==="jug"?teamIdentityHTML()+how:`<section class="group"><h3>Link para clientes</h3><div class="tlink"><code>${esc(location.origin+location.pathname)}</code></div><p class="hint">Con este link entran a la app general (Hoy flexible, programas, desafíos). Si a un cliente le armás un plan, pasa a Jugadoras.</p></section>`}
   </section>`;
   v.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>openPlayer(b.dataset.pl));
   bindConsultas(v);
+  v.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ ui.eqSeg=b.dataset.seg; renderAll(); });
+  bindTeamIdentity(v);
+  const tc=$("#tCp"); if(tc) tc.onclick=async()=>{ try{ await navigator.clipboard.writeText(teamLink()); toast("Link copiado. Pegalo en WhatsApp"); }catch(e){ const r=document.createRange(); r.selectNodeContents($("#tLk")); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Copialo con Ctrl+C"); } };
 }
 
 function openPlayer(id){
@@ -2021,7 +2053,22 @@ function openPlayer(id){
 /* ===== PLAN DEL EQUIPO (básquet): plan individual, lesión, minutos de juego y consultas ===== */
 const PL = {mine:null, loaded:false, all:{}, consultas:[]};
 const DIAS_S = ["","Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-const planMode = () => !ROLE.coach && !!PL.mine && (PL.mine.sesiones||[]).length>0;
+/* Link del equipo (?equipo=1): la jugadora ve solo nombre en la bienvenida y luego su plan */
+const EQUIPO_LINK = (()=>{ let on=false; try{ on=new URLSearchParams(location.search).has("equipo"); if(on) localStorage.setItem(LS+"-equipo","1"); else on=localStorage.getItem(LS+"-equipo")==="1"; }catch(e){} return on; })();
+const esEquipo = () => !ROLE.coach && (EQUIPO_LINK || !!profile().equipo);
+const planMode = () => !ROLE.coach && ((!!PL.mine && (PL.mine.sesiones||[]).length>0) || (!!profile().equipo && !!profile().onb));
+const teamLink = () => location.origin + location.pathname + "?equipo=1";
+function openOnbEquipo(){
+  ui.onbShown=true;
+  const st={nombre:((state.perfil.find(x=>x.id==="main")||{}).nombre)||ROLE.name||""};
+  openSheet({title:"Bienvenida al equipo", footer:`<span></span><button class="pill accent" id="oeOk">Entrar</button>`, render:B=>{
+    B.innerHTML=`<div class="intro"><h2>¡Hola!</h2><p class="hint">Acá vas a tener el plan que te arman tus profes, vas a cargar tus minutos de juego y vas a poder hacerles consultas.</p></div>
+      <label class="f">Nombre y apellido<input id="oeN" value="${esc(st.nombre)}" placeholder="Así te ven tus profes" autocomplete="name"></label>`;
+    const n=$("#oeN"); n.oninput=e=>st.nombre=e.target.value; setTimeout(()=>n.focus(),100);
+    $("#oeOk").onclick=async()=>{ if(!st.nombre.trim()){ toast("Escribí tu nombre y apellido"); n.focus(); return; }
+      await saveProfile({nombre:st.nombre.trim(), equipo:true, dep:"basquet", obj:"deporte", dias:3, onb:true}); closeSheet(); toast("¡Bienvenida al equipo!"); };
+  }});
+}
 const restOf = e => e.desc || exInfo(e.nombre).descanso;
 const pItemTxt = x => `${esc(x.n||"Ejercicio")} ${x.s||3}×${x.t?`${x.seg||30} s`:(x.r||"–")}`;
 async function loadPlan(){
@@ -2040,37 +2087,68 @@ function watchPlan(){
 }
 
 /* ---------- Vista de la jugadora ---------- */
+/* Identidad del equipo: la guardan los entrenadores; la ven las jugadoras */
+const TEAM_COLORS = [["Naranja","#F0643C"],["Rojo","#E5484D"],["Azul","#3E8EF7"],["Celeste","#2BB3C0"],["Verde","#30A46C"],["Violeta","#8E6CEF"],["Amarillo","#F5B83D"]];
+const TEAM = () => ((state.ejercicios||[]).find(x=>x.id==="__equipo")||{}).equipo || {};
+const DOW = () => { const d=new Date().getDay(); return d===0?7:d; };
+const DIAS_L = ["L","M","M","J","V","S","D"];
 function renderPlanView(v){
-  const P=PL.mine, m=monday(today()), p=profile();
+  const P=PL.mine||{}, m=monday(today()), p=profile(), T=TEAM(), tab=ui.ptab||"plan";
+  const ses=P.sesiones||[];
   const doneWk = id => state.sesiones.some(s=>s.planSes===id && s.fecha>=m);
-  const ses=P.sesiones||[], next=ses.find(s=>!doneWk(s.id));
-  const juegos=state.sesiones.filter(s=>s.tipo==="Deporte" && s.fecha>=m), minJ=juegos.reduce((a,s)=>a+Math.round((s.duracion||0)/60),0);
-  const mine=PL.consultas.filter(c=>c.player_id===ME);
-  const ult=state.sesiones.slice().sort(sesSort).slice(0,5);
-  v.innerHTML=`<section class="stack">
-    <div class="intro"><p class="eyebrow">Tu plan</p><h2>Hola, ${esc(String(p.nombre||"").split(" ")[0]||"")}</h2></div>
-    ${P.lesion&&P.lesion.activa?`<div class="lesion"><b>Trabajo adaptado</b><span>${esc(P.lesion.nota||"Seguí las indicaciones de tus profes y avisá cualquier molestia.")}</span></div>`:""}
-    ${P.nota?`<div class="pnote"><b>Indicación de los profes</b><span>${esc(P.nota)}</span></div>`:""}
-    <div class="stack">${ses.map(s=>{ const ok=doneWk(s.id), nx=next&&next.id===s.id;
-      return `<article class="opt ${nx?"main":""}">
-        <div class="opt-t">${s.dia?`<span class="chip">${DIAS_S[s.dia]}</span>`:""}${ok?`<span class="chip on">Hecho esta semana ✓</span>`:nx?`<span class="chip on">Te toca</span>`:""}</div>
-        <h3>${esc(s.nombre||"Sesión")}</h3>
-        <p class="opt-list">${(s.items||[]).map(pItemTxt).join(" · ")}</p>
-        <button class="pill ${nx?"accent":"dark"}" data-ps="${esc(s.id)}" style="justify-content:center">${ok?"Hacer de nuevo":"Empezar"}</button>
-      </article>`; }).join("")}</div>
-    <section class="group"><div class="row" style="justify-content:space-between"><h3>Minutos de juego</h3><span class="chip">${minJ} min esta semana</span></div>
-      <button class="pill ghost" id="pJuego" style="justify-content:center">${I.plus} Cargar partido o práctica</button>
-      ${juegos.length?juegos.slice().sort(sesSort).slice(0,4).map(s=>`<div class="sesl"><b>${esc(s.nombre||"Básquet")}</b><small>${esc(sesMeta(s))}</small></div>`).join(""):""}</section>
-    <section class="group"><div class="row" style="justify-content:space-between"><h3>Consultas al profe</h3></div>
-      <button class="pill ghost" id="pCons" style="justify-content:center">Hacer una consulta</button>
-      ${mine.slice(0,6).map(c=>`<div class="cq"><p class="q">${c.ejercicio?`<small>Sobre ${esc(c.ejercicio)}</small>`:""}${esc(c.texto)}</p>${c.respuesta?`<p class="a"><b>${esc(c.resp_por||"Profe")}:</b> ${esc(c.respuesta)}</p>`:`<small class="hint">Esperando respuesta</small>`}</div>`).join("")}</section>
-    ${ult.length?`<section class="group"><h3>Tus últimos entrenos</h3>${ult.map(s=>`<div class="sesl"><b>${esc(sesTitle(s))}</b><small>${esc(sesMeta(s))}</small></div>`).join("")}</section>`:""}
-    <button class="pill ghost" id="logout" style="justify-content:center">Cerrar sesión</button>
-  </section>`;
+  const hoyS = ses.find(s=>s.dia===DOW() && !doneWk(s.id)) || ses.find(s=>!doneWk(s.id)) || null;
+  const doneN = ses.filter(s=>doneWk(s.id)).length;
+  const juegos=state.sesiones.filter(s=>s.tipo==="Deporte").sort(sesSort);
+  const minJ=juegos.filter(s=>s.fecha>=m).reduce((a,s)=>a+Math.round((s.duracion||0)/60),0);
+  const mine=PL.consultas.filter(c=>c.player_id===ME), resp=mine.filter(c=>c.respuesta).length;
+  const nombre=esc(String(p.nombre||"").split(" ")[0]||"");
+  const week=DIAS_L.map((d,i)=>{ const f=addDays(m,i), plan=ses.some(s=>s.dia===i+1), hecho=state.sesiones.some(s=>s.fecha===f);
+    return `<div class="wd ${f===today()?"hoy":""} ${hecho?"ok":plan?"plan":""}"><span>${d}</span><i>${hecho?"✓":""}</i></div>`; }).join("");
+  const sesCard = (s, big) => { const ok=doneWk(s.id);
+    return `<article class="opt ${big?"main phero":""}">
+      <div class="opt-t">${big?`<span class="chip on">${s.dia===DOW()?"Tu entreno de hoy":"Te toca"}</span>`:""}${s.dia?`<span class="chip">${DIAS_S[s.dia]}</span>`:""}${ok?`<span class="chip on">Hecho esta semana ✓</span>`:""}</div>
+      <h3>${esc(s.nombre||"Sesión")}</h3>
+      <p class="opt-list">${(s.items||[]).map(pItemTxt).join(" · ")}</p>
+      <button class="pill ${big?"accent":"dark"}" data-ps="${esc(s.id)}" style="justify-content:center">${ok?"Hacer de nuevo":"Empezar"}</button></article>`; };
+  let body="";
+  if(tab==="plan"){
+    body=`${P.lesion&&P.lesion.activa?`<div class="lesion"><b>Trabajo adaptado</b><span>${esc(P.lesion.nota||"Seguí las indicaciones de tus profes y avisá cualquier molestia.")}</span></div>`:""}
+      ${!ses.length?`<div class="pnote"><b>Tus profes están armando tu plan</b><span>Cuando esté listo aparece acá. Mientras tanto podés cargar tus minutos de juego y hacerles consultas.</span></div>`
+        : hoyS ? sesCard(hoyS,true) : `<div class="pnote"><b>¡Semana completa! 💪</b><span>Hiciste todas las sesiones de tu plan. Si querés repetir alguna, está abajo.</span></div>`}
+      <div class="wstrip" aria-label="Tu semana">${week}</div>
+      <div class="mini"><div><b>${doneN}/${ses.length}</b><span>Sesiones semana</span></div><div><b>${minJ}</b><span>Min. de juego</span></div><div><b>${resp}</b><span>Respuestas</span></div></div>
+      ${P.nota?`<div class="pnote"><b>Indicación de los profes</b><span>${esc(P.nota)}</span></div>`:""}
+      ${ses.filter(s=>s!==hoyS).length?`<h3 class="psec">Tu plan</h3><div class="stack">${ses.filter(s=>s!==hoyS).map(s=>sesCard(s,false)).join("")}</div>`:""}`;
+  } else if(tab==="juego"){
+    body=`<div class="mini"><div><b>${minJ}</b><span>Min. esta semana</span></div><div><b>${juegos.filter(s=>s.juego==="partido").length}</b><span>Partidos</span></div><div><b>${juegos.filter(s=>s.juego!=="partido").length}</b><span>Prácticas</span></div></div>
+      <button class="pill accent" id="pJuego" style="justify-content:center">${I.plus} Cargar partido o práctica</button>
+      <section class="group"><h3>Tus registros</h3>${juegos.length?juegos.slice(0,15).map(s=>`<div class="sesl"><b>${esc(s.nombre||"Básquet")}</b><small>${esc(sesMeta(s))}</small>${s.notas?`<small>“${esc(s.notas)}”</small>`:""}</div>`).join(""):`<p class="hint">Después de cada partido o práctica, cargá tus minutos. Así tus profes ajustan tu carga de trabajo.</p>`}</section>`;
+  } else {
+    body=`<button class="pill accent" id="pCons" style="justify-content:center">Hacer una consulta</button>
+      <section class="group"><h3>Tus consultas</h3>${mine.length?mine.map(c=>`<div class="cq"><p class="q">${c.ejercicio?`<small>Sobre ${esc(c.ejercicio)}</small>`:""}${esc(c.texto)}</p>${c.respuesta?`<p class="a"><b>${esc(c.resp_por||"Profe")}:</b> ${esc(c.respuesta)}</p>`:`<small class="hint">Esperando respuesta</small>`}</div>`).join(""):`<p class="hint">¿Dudas con un ejercicio, una molestia o algo del plan? Escribiles a tus profes. También podés consultar desde cada ejercicio mientras entrenás.</p>`}</section>
+      <button class="pill ghost" id="logout" style="justify-content:center">Cerrar sesión</button>`;
+  }
+  v.innerHTML=`<section class="stack"><div class="intro"><p class="eyebrow">${tab==="plan"?"Tu plan":tab==="juego"?"Partidos y prácticas":"Tus profes"}</p><h2>${tab==="plan"?`Hola, ${nombre}`:tab==="juego"?"Minutos de juego":"Consultas al profe"}</h2></div>${body}</section>`;
   v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{ const s=ses.find(x=>x.id===b.dataset.ps); if(s) startPlanSes(s); });
-  $("#pJuego").onclick=openJuego; $("#pCons").onclick=()=>openConsulta({});
-  $("#logout").onclick=twoTap($("#logout"),"Tocá de nuevo para salir",signOut);
+  const j=$("#pJuego"); if(j) j.onclick=openJuego;
+  const c=$("#pCons"); if(c) c.onclick=()=>openConsulta({});
+  const lo=$("#logout"); if(lo) lo.onclick=twoTap(lo,"Tocá de nuevo para salir",signOut);
+  document.querySelectorAll("[data-ptab]").forEach(b=>b.setAttribute("aria-current", b.dataset.ptab===tab?"page":"false"));
 }
+function teamIdentityHTML(){
+  const T=TEAM();
+  return `<section class="group"><h3>Identidad del equipo</h3><p class="hint">Así ven la app tus jugadoras: con el nombre y el color del equipo.</p>
+    <label class="f">Nombre del equipo<input id="tmN" value="${esc(T.nombre||"")}" placeholder="Ej.: Básquet Femenino Sunchales"></label>
+    <div class="swatches" role="radiogroup" aria-label="Color del equipo">${TEAM_COLORS.map(([n,c])=>`<button class="sw ${String(T.color||"#F0643C").toLowerCase()===c.toLowerCase()?"on":""}" data-col="${c}" style="--c:${c}" aria-label="${n}" title="${n}"></button>`).join("")}</div>
+    <button class="pill accent" id="tmOk" style="justify-content:center">Guardar identidad</button></section>`;
+}
+function bindTeamIdentity(root){
+  let col=TEAM().color||"#F0643C";
+  root.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>{ col=b.dataset.col; root.querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on",x===b)); });
+  const ok=root.querySelector("#tmOk"); if(ok) ok.onclick=async()=>{ const nombre=root.querySelector("#tmN").value.trim();
+    try{ await setDoc("ejercicios","__equipo",{equipo:{nombre, color:col}}); toast("Listo. Las jugadoras ya lo ven así."); }catch(e){ saveErr(e); } };
+}
+
 function startPlanSes(s){
   openSesion({fecha:today(), planSes:s.id, tpl:{key:"plan:"+s.id, nombre:s.nombre||"Sesión", cat:s.cat||["F"],
     items:(s.items||[]).map(x=>({n:x.n, s:x.s||3, r:x.t?(x.seg||30):x.r, t:!!x.t, desc:x.desc||null, nota:x.nota||""}))}});
@@ -2366,7 +2444,11 @@ function openFeedback(){
   document.body.appendChild(w); draw(); w.querySelector("#fbT").focus();
 }
 $("#fbBtn").onclick=openFeedback;
-const _renderAll=renderAll; renderAll=function(){ _renderAll(); fbCount(); fabState(); };
+const _renderAll=renderAll; renderAll=function(){ const pm=planMode(), T=TEAM(); document.body.classList.toggle("planmode", pm);
+  if(pm && T.color) document.documentElement.style.setProperty("--accent", T.color); else document.documentElement.style.removeProperty("--accent");
+  const tn=document.getElementById("teamName"); if(tn) tn.textContent=pm?(T.nombre||"Mi equipo"):"";
+  _renderAll(); fbCount(); fabState(); };
+document.querySelectorAll("[data-ptab]").forEach(b=>b.onclick=()=>{ ui.ptab=b.dataset.ptab; renderAll(); window.scrollTo(0,0); });
 
 lsRead();
 renderAll();
