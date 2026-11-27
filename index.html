@@ -296,7 +296,19 @@ nav.pnav{display:none} .planmode nav.pnav{display:block}
 .teamname{display:none;flex-direction:column;line-height:1.05}
 .teamname b{font-family:var(--display);font-size:24px;text-transform:uppercase;letter-spacing:.4px}
 .teamname small{font-size:12px;color:var(--muted)}
-.planmode .brand h1{display:none} .planmode .teamname{display:flex}
+.branded .brand h1{display:none} .branded .teamname{display:flex}
+.segbar.sub{margin-top:-4px} .segbar.sub button{padding:8px}
+.optbtn{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;color:var(--ink);font:inherit;cursor:pointer}
+.optbtn span{color:var(--muted);font-size:14px} .optbtn.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.cuota-m{display:flex;flex-direction:column;margin:0} .cuota-m b{font-family:var(--display);font-size:32px} .cuota-m span{color:var(--muted);font-size:14px}
+.cuota.cu-vencida{border-color:var(--red)} .cuota.cu-pagado{border-color:var(--green)}
+.chip.cu-pagado{background:color-mix(in srgb,var(--green) 22%,transparent);color:var(--green)}
+.chip.cu-avisado{background:color-mix(in srgb,var(--yellow) 22%,transparent);color:var(--yellow)}
+.chip.cu-vencida{background:color-mix(in srgb,var(--red) 22%,transparent);color:var(--red)}
+.curow{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.curow:first-of-type{border-top:0} .cun{display:flex;flex-direction:column;min-width:0} .cun small{color:var(--muted)}
+.cuacts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center} .cuacts:empty{display:none}
+.cuacts a.pill{text-decoration:none}
 .wstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .wd{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
 .wd i{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--accent-ink)}
@@ -1982,8 +1994,12 @@ function daysSince(f){ return f ? Math.round((pd(today())-pd(f))/864e5) : null; 
 function lastSes(id){ const l=(team.ses[id]||[]).slice().sort(sesSort); return l[0]||null; }
 
 function renderEquipo(v){
-  const seg=ui.eqSeg||"jug", isJug=p=>!!p.equipo||!!PL.all[p.id], all0=Object.values(team.players), nJ=all0.filter(isJug).length, nC=all0.length-nJ;
-  const ps=all0.filter(p=>seg==="jug"?isJug(p):!isJug(p)).sort((a,b)=>{ const la=lastSes(a.id), lb=lastSes(b.id); return (lb?lb.fecha:"").localeCompare(la?la.fecha:"") || pName(a).localeCompare(pName(b)); });
+  const segs=misGrupos().concat(esDueno()?["general"]:[]);
+  let seg={jug:"libertad",cli:"general"}[ui.eqSeg]||ui.eqSeg; if(!segs.includes(seg)) seg=segs[0];
+  const all0=Object.values(team.players), inSeg=(p,g)=>g==="general"?!grupoOf(p):grupoOf(p)===g;
+  const segLbl=g=>g==="general"?"Clientes":(GCFG(g).nombre||GRUPOS_DEF[g].nombre);
+  const who=seg==="libertad"?"Jugadoras":seg==="libergym"?"Socios":"Clientes";
+  const ps=all0.filter(p=>inSeg(p,seg)).sort((a,b)=>{ const la=lastSes(a.id), lb=lastSes(b.id); return (lb?lb.fecha:"").localeCompare(la?la.fecha:"") || pName(a).localeCompare(pName(b)); });
   const m=monday(today()), wk=s=>s.fecha>=m;
   const hoyN=ps.filter(p=>(team.ses[p.id]||[]).some(s=>s.fecha===today())).length;
   const semN=ps.reduce((a,p)=>a+(team.ses[p.id]||[]).filter(wk).length,0);
@@ -2000,30 +2016,41 @@ function renderEquipo(v){
       <li>Pone su nombre y aparece acá. Tocá su nombre → <b>Armar plan</b> (o <b>Copiar de otra</b>) y desde ese momento ve solo su plan, los minutos de juego y las consultas.</li>
     </ol>
     <p class="hint">Cada jugadora ve solo sus datos. Vos ves los de todas. Los videos y fotos de ejercicios que cargás vos los ven todas, pero solo vos los podés cambiar.</p></details>`;
+  const segbar=segs.length>1?`<div class="segbar" role="tablist" style="grid-template-columns:repeat(${segs.length},1fr)">${segs.map(g=>`<button role="tab" data-seg="${g}" class="${seg===g?"on":""}" aria-selected="${seg===g}">${esc(segLbl(g))} (${all0.filter(p=>inSeg(p,g)).length})</button>`).join("")}</div>`:"";
+  const gymView=CUOTAS_ON && seg==="libergym"?(ui.gymView||"socios"):null;
+  const subbar=gymView?`<div class="segbar sub" role="tablist"><button role="tab" data-gv="socios" class="${gymView==="socios"?"on":""}">Socios</button><button role="tab" data-gv="cuotas" class="${gymView==="cuotas"?"on":""}">Cuotas</button></div>`:"";
+  const pend=pending().filter(c=>ps.some(p=>p.id===c.player_id));
+  const linkCard=(g,txt)=>`<section class="group"><h3>Link para ${g==="general"?"clientes":who.toLowerCase()}</h3><div class="tlink"><code id="tLk">${esc(g==="general"?location.origin+location.pathname:gLink(g))}</code>${g==="general"?"":`<button class="pill accent sm" id="tCp">Copiar link</button>`}</div><p class="hint">${txt}</p></section>`;
+  const bindTop=()=>{ v.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ ui.eqSeg=b.dataset.seg; renderAll(); }); v.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{ ui.gymView=b.dataset.gv; renderAll(); }); };
+  if(team.loaded && gymView==="cuotas"){
+    v.innerHTML=`<section class="stack"><div class="intro"><p class="eyebrow">Entrenador</p><h2>${esc(segLbl(seg))}</h2></div>${segbar}${subbar}${cuotasPanelHTML(ps)}</section>`;
+    bindTop(); bindCuotasPanel(v); return;
+  }
   if(!team.loaded){ v.innerHTML=`<section class="stack"><div class="intro"><p class="eyebrow">Entrenador</p><h2>Tu equipo</h2></div><p class="hint">Cargando jugadoras…</p></section>`; return; }
   v.innerHTML=`<section class="stack">
-    <div class="intro"><p class="eyebrow">Entrenador</p><h2>${seg==="jug"?"Tu equipo":"Clientes"}</h2></div>
-    <div class="segbar" role="tablist"><button role="tab" data-seg="jug" class="${seg==="jug"?"on":""}" aria-selected="${seg==="jug"}">Jugadoras (${nJ})</button><button role="tab" data-seg="cli" class="${seg==="cli"?"on":""}" aria-selected="${seg==="cli"}">Clientes (${nC})</button></div>
+    <div class="intro"><p class="eyebrow">Entrenador</p><h2>${esc(segLbl(seg))}</h2></div>
+    ${segbar}${subbar}
     ${team.err?`<p class="hint">No se pudo leer el equipo. Revisá la conexión.</p>`:""}
-    <div class="mini"><div><b>${ps.length}</b><span>${seg==="jug"?"Jugadoras":"Clientes"}</span></div><div><b>${hoyN}</b><span>Entrenaron hoy</span></div><div><b>${semN}</b><span>Sesiones esta semana</span></div></div>
-    ${seg==="jug" && pending().length?`<section class="group cqbox"><div class="row" style="justify-content:space-between"><h3>Consultas sin responder</h3><span class="chip on">${pending().length}</span></div>${consultasHTML(pending().slice(0,10))}</section>`:""}
+    <div class="mini"><div><b>${ps.length}</b><span>${who}</span></div><div><b>${hoyN}</b><span>Entrenaron hoy</span></div><div><b>${semN}</b><span>Sesiones esta semana</span></div></div>
+    ${pend.length?`<section class="group cqbox"><div class="row" style="justify-content:space-between"><h3>Consultas sin responder</h3><span class="chip on">${pend.length}</span></div>${consultasHTML(pend.slice(0,10))}</section>`:""}
     ${ps.length?`<section class="group"><h3>Actividad reciente</h3>
       ${feed.length?`<div class="feed">${feed.slice(0,25).map(f=> f.k==="s"
         ? `<div class="fi"><span class="dot ${f.s.tipo==="Deporte"?"s":""}"></span><p><b>${esc(pName(f.p))}</b> ${f.s.tipo==="Deporte"?"registró":"finalizó"} <b>${esc(sesTitle(f.s))}</b><br><small>${esc(sesMeta(f.s))}</small></p></div>`
         : (()=>{ const t=trk(f.x.track); if(!t) return ""; const lv=t.lv[f.x.nivel]||t.lv[0]; return `<div class="fi"><span class="dot d"></span><p><b>${esc(pName(f.p))}</b> hizo el desafío <b>${esc(t.g)}</b>: ${esc(fmtV(lv,f.x.v))}<br><small>${esc(lv.n)}${t.grips&&f.x.agarre?` · toma ${esc((t.grips.find(g=>g.id===f.x.agarre)||{}).n||"")}`.toLowerCase():""} · ${diaTxt(f.x.fecha)} · ${horaTxt(f.x.creado)} h</small></p></div>`; })()).join("")}</div>`
         :`<p class="hint">Nadie entrenó en los últimos 7 días.</p>`}</section>
-    <section class="stack"><h3 style="margin:6px 0 0">${seg==="jug"?"Jugadoras":"Clientes"}</h3>${ps.map(p=>{ const l=lastSes(p.id), ds=daysSince(l&&l.fecha), n=(team.ses[p.id]||[]).filter(wk).length, goal=p.dias||3;
+    <section class="stack"><h3 style="margin:6px 0 0">${who}</h3>${ps.map(p=>{ const l=lastSes(p.id), ds=daysSince(l&&l.fecha), n=(team.ses[p.id]||[]).filter(wk).length, goal=p.dias||3;
       const st = !l ? ((team.des[p.id]||[]).length?`Por ahora solo hizo desafíos`:`<span class="warn">Todavía no entrenó</span>`) : ds===0 ? `<span class="ok">Entrenó hoy</span>` : ds>=4 ? `<span class="warn">Sin entrenar hace ${ds} días</span>` : `Último entreno ${ds===1?"ayer":`hace ${ds} días`}`;
       return `<button class="pl" data-pl="${esc(p.id)}"><div class="ph"><span class="av">${esc(initials(pName(p)))}</span><span class="nm"><b>${esc(pName(p))}</b><small>${st}${p.dep&&p.dep!=="ninguno"?` · ${esc(depName(p.dep))}`:""}</small><small>${planStatus(p.id)}</small></span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></div>
         <div class="wkbar"><i style="width:${Math.min(100,n/goal*100)}%"></i></div><small class="hint">Semana: ${n} de ${goal} sesiones</small></button>`; }).join("")}</section>`
-    :`<div class="empty"><b>${seg==="jug"?"Todavía no hay jugadoras":"Todavía no hay clientes"}</b><span class="hint">${seg==="jug"?"Aparecen acá cuando entran con el link del equipo, o cuando a alguien le armás un plan.":"Acá aparecen las personas que usan Impulso con el link común."}</span></div>`}
-    ${seg==="jug"?teamIdentityHTML()+how:`<section class="group"><h3>Link para clientes</h3><div class="tlink"><code>${esc(location.origin+location.pathname)}</code></div><p class="hint">Con este link entran a la app general (Hoy flexible, programas, desafíos). Si a un cliente le armás un plan, pasa a Jugadoras.</p></section>`}
+    :`<div class="empty"><b>Todavía no hay ${who.toLowerCase()}</b><span class="hint">${seg==="libertad"?"Aparecen acá cuando entran con el link del equipo.":seg==="libergym"?"Aparecen acá cuando entran con el link de LiberGym.":"Acá aparecen las personas que usan Impulso con el link común."}</span></div>`}
+    ${seg==="general"?linkCard("general","Con este link entran a la app general (Hoy flexible, programas, desafíos). Si a un cliente le armás un plan, ve solo su plan.")
+      : teamIdentityHTML(seg) + (seg==="libertad" ? how : linkCard("libergym", CUOTAS_ON?"Pasáselo a los socios del gimnasio. Crean su cuenta, eligen si son socios del club y ven su cuota en la app. Si querés entrenarlos de forma personalizada, tocás su nombre → Armar plan.":"Pasáselo a los socios del gimnasio. Crean su cuenta y entrenan solos con la app; vos y Juli los ven acá. Para entrenarlos de forma personalizada, tocás su nombre → Armar plan."))}
   </section>`;
   v.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>openPlayer(b.dataset.pl));
   bindConsultas(v);
-  v.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ ui.eqSeg=b.dataset.seg; renderAll(); });
-  bindTeamIdentity(v);
-  const tc=$("#tCp"); if(tc) tc.onclick=async()=>{ try{ await navigator.clipboard.writeText(teamLink()); toast("Link copiado. Pegalo en WhatsApp"); }catch(e){ const r=document.createRange(); r.selectNodeContents($("#tLk")); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Copialo con Ctrl+C"); } };
+  bindTop();
+  bindTeamIdentity(v, seg);
+  const tc=$("#tCp"); if(tc) tc.onclick=async()=>{ try{ await navigator.clipboard.writeText(seg==="general"?location.origin+location.pathname:gLink(seg)); toast("Link copiado. Pegalo en WhatsApp"); }catch(e){ const r=document.createRange(); r.selectNodeContents($("#tLk")); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Copialo con Ctrl+C"); } };
 }
 
 function openPlayer(id){
@@ -2054,10 +2081,123 @@ function openPlayer(id){
 const PL = {mine:null, loaded:false, all:{}, consultas:[]};
 const DIAS_S = ["","Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 /* Link del equipo (?equipo=1): la jugadora ve solo nombre en la bienvenida y luego su plan */
-const EQUIPO_LINK = (()=>{ let on=false; try{ on=new URLSearchParams(location.search).has("equipo"); if(on) localStorage.setItem(LS+"-equipo","1"); else on=localStorage.getItem(LS+"-equipo")==="1"; }catch(e){} return on; })();
-const esEquipo = () => !ROLE.coach && (EQUIPO_LINK || !!profile().equipo);
-const planMode = () => !ROLE.coach && ((!!PL.mine && (PL.mine.sesiones||[]).length>0) || (!!profile().equipo && !!profile().onb));
-const teamLink = () => location.origin + location.pathname + "?equipo=1";
+/* ===== GRUPOS (Libertad, LiberGym) y CUOTAS ===== */
+const CUOTAS_ON = false;   /* cuotas listas pero apagadas: poner true para activarlas */
+const GRUPOS_DEF = {libertad:{nombre:"Libertad", tipo:"equipo"}, libergym:{nombre:"LiberGym", tipo:"gym"}};
+const GR = {list:{}, mis:undefined, cuotas:[]};
+const GRUPO_LINK = (()=>{ let g=null; try{ const q=new URLSearchParams(location.search); g=q.get("g")||(q.has("equipo")?"libertad":null); if(g && !GRUPOS_DEF[g]) g=null;
+  if(g) localStorage.setItem(LS+"-grupo",g); else g=localStorage.getItem(LS+"-grupo")||(localStorage.getItem(LS+"-equipo")==="1"?"libertad":null); }catch(e){} return g; })();
+const grupoOf = p => (p && p.grupo) || (p && (p.equipo || PL.all[p.id]) ? "libertad" : null);
+const myGrupo = () => { if(ROLE.coach) return null; const p=profile(); return p.grupo || (p.equipo || PL.mine ? "libertad" : null) || GRUPO_LINK || null; };
+const esEquipo = () => myGrupo()==="libertad";
+const planMode = () => !ROLE.coach && ((!!PL.mine && (PL.mine.sesiones||[]).length>0) || (esEquipo() && !!profile().onb));
+const gLink = g => location.origin + location.pathname + "?g=" + g;
+const teamLink = () => gLink("libertad");
+const TEAM_OLD = () => ((state.ejercicios||[]).find(x=>x.id==="__equipo")||{}).equipo || {};
+const GCFG = g => { const c=Object.assign({}, GRUPOS_DEF[g]||{}, GR.list[g]||{}); if(g==="libertad" && !(GR.list.libertad||{}).nombre) Object.assign(c, TEAM_OLD()); return c; };
+const TEAM = () => GCFG(myGrupo()||"libertad");
+const misGrupos = () => (GR.mis===undefined || GR.mis===null) ? Object.keys(GRUPOS_DEF) : GR.mis.filter(g=>GRUPOS_DEF[g]);
+const esDueno = () => ROLE.coach && (GR.mis===undefined || GR.mis===null);
+const periodoAct = () => today().slice(0,7);
+const mesNom = per => { const [y,m]=per.split("-").map(Number); return new Date(y,m-1,1).toLocaleDateString("es-AR",{month:"long"}); };
+const pesos = n => "$" + Math.round(n||0).toLocaleString("es-AR");
+const montoDe = p => { const mt=GCFG("libergym").montos||{socio:25000,nosocio:40000}; return p && p.cuota_tipo==="socio" ? mt.socio : mt.nosocio; };
+const venceDia = () => GCFG("libergym").vence || 10;
+function cuotaEstado(uid, per){
+  const r=GR.cuotas.find(c=>c.user_id===uid && c.periodo===per); if(r) return {r, est:r.estado};
+  const vencida = per < periodoAct() || (per===periodoAct() && +today().slice(8,10) > venceDia());
+  return {r:null, est: vencida ? "vencida" : "pendiente"};
+}
+const EST_TXT = {pagado:"Pagado ✓", avisado:"Avisó que pagó", vencida:"Vencida", pendiente:"Pendiente"};
+
+/* Socio: tarjeta de su cuota */
+function cuotaCardHTML(){
+  const p=profile(), per=periodoAct(), {r,est}=cuotaEstado(ME,per);
+  const tipo = p.cuota_tipo==="socio" ? "Socio del club" : "No socio";
+  return `<section class="group cuota cu-${est}"><div class="row" style="justify-content:space-between"><h3>Tu cuota de ${mesNom(per)}</h3><span class="chip cu-${est}">${est==="pagado"?"Al día ✓":est==="avisado"?"Avisado":est==="vencida"?"Vencida":"Pendiente"}</span></div>
+    ${est==="pagado" ? `<p class="hint" style="margin:0">¡Gracias! Tu cuota de ${mesNom(per)} está paga.</p>`
+    : est==="avisado" ? `<p class="hint" style="margin:0">Avisaste el pago${r&&r.avisado_at?` el ${new Date(r.avisado_at).toLocaleDateString("es-AR")}`:""}. Falta que el gimnasio lo confirme.</p>`
+    : `<p class="cuota-m"><b>${pesos(montoDe(p))}</b><span>${tipo} · vence el ${venceDia()} de ${mesNom(per)} · pagás con Mercado Pago</span></p>
+       <div class="grid2"><button class="pill accent" id="cuPay" style="justify-content:center">Pagar ahora</button><button class="pill ghost" id="cuYa" style="justify-content:center">Ya pagué</button></div>`}
+  </section>`;
+}
+function bindCuotaCard(root){
+  const pay=root.querySelector("#cuPay"); if(pay) pay.onclick=()=>{ const l=GCFG("libergym").link_mp; if(!l || !/^https:\/\//.test(l)){ toast("El gimnasio todavía no cargó el link de pago"); return; } window.open(l,"_blank","noopener"); };
+  const ya=root.querySelector("#cuYa"); if(ya) ya.onclick=twoTap(ya,"Tocá de nuevo para avisar",async()=>{
+    try{ const {error}=await SB.from("cuotas").insert({user_id:ME, periodo:periodoAct(), monto:montoDe(profile()), estado:"avisado", avisado_at:new Date().toISOString()}); if(error) throw error;
+      toast("¡Listo! Le avisamos al gimnasio."); loadPlan(); }catch(e){ toast("No se pudo avisar. Probá de nuevo."); } });
+}
+function openCuotaSetup(){
+  ui.cuotaAsked=true; const st={tipo:profile().cuota_tipo||"", tel:profile().tel||""}; const mt=GCFG("libergym").montos||{socio:25000,nosocio:40000};
+  openSheet({title:"Tu cuota en LiberGym", footer:`<button class="pill ghost" id="csNo">Ahora no</button><button class="pill accent" id="csOk">Guardar</button>`, render:B=>{
+    const draw=()=>{ B.innerHTML=`<div class="intro"><h2>¿Sos socio/a del club?</h2><p class="hint">Así te mostramos tu cuota del gimnasio y la podés pagar desde la app.</p></div>
+      <div class="stack">${[["socio","Sí, soy socio/a del club",mt.socio],["nosocio","No soy socio/a",mt.nosocio]].map(([k,t,m])=>`<button class="optbtn ${st.tipo===k?"on":""}" data-ct="${k}" aria-pressed="${st.tipo===k}"><b>${t}</b><span>${pesos(m)} por mes · días y horarios libres</span></button>`).join("")}</div>
+      <label class="f">Tu WhatsApp <span class="hint">(para recordarte la cuota)</span><input id="csT" type="tel" inputmode="tel" autocomplete="tel" value="${esc(st.tel)}" placeholder="Ej.: 3493 123456"></label>`;
+      B.querySelectorAll("[data-ct]").forEach(b=>b.onclick=()=>{ st.tipo=b.dataset.ct; draw(); }); $("#csT").oninput=e=>st.tel=e.target.value; };
+    draw(); $("#csNo").onclick=closeSheet;
+    $("#csOk").onclick=async()=>{ if(!st.tipo){ toast("Elegí una opción"); return; } await saveProfile({grupo:"libergym", cuota_tipo:st.tipo, tel:st.tel.trim()}); closeSheet(); toast("¡Listo! Ya ves tu cuota en Entrena."); };
+  }});
+}
+
+/* Entrenadores: panel de cuotas */
+function waLink(p, per){
+  let t=String(p.tel||"").replace(/\D/g,""); if(t.startsWith("0")) t=t.slice(1); if(!t.startsWith("54")) t="549"+t;
+  const c=GCFG("libergym");
+  const msg=`Hola ${String(p.nombre||"").split(" ")[0]}! Te recordamos que la cuota de ${mesNom(per)} de ${c.nombre||"LiberGym"} (${pesos(montoDe(p))}) vence el ${venceDia()}. Podés pagarla desde Impulso${c.link_mp?` o con este link: ${c.link_mp}`:""}. ¡Gracias!`;
+  return `https://wa.me/${t}?text=${encodeURIComponent(msg)}`;
+}
+function cuotasPanelHTML(ps){
+  const per=ui.cuPer||periodoAct();
+  const rows=ps.map(p=>Object.assign({p}, cuotaEstado(p.id, per)));
+  const val=x=>(x.r&&x.r.monto)||montoDe(x.p);
+  const cobr=rows.filter(x=>x.est==="pagado").reduce((a,x)=>a+val(x),0), pend=rows.filter(x=>x.est!=="pagado").reduce((a,x)=>a+val(x),0);
+  const ord={avisado:0,vencida:1,pendiente:2,pagado:3}; rows.sort((a,b)=>ord[a.est]-ord[b.est] || pName(a.p).localeCompare(pName(b.p)));
+  const [y,m]=per.split("-").map(Number), f=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  return `<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><button class="iconbtn" data-per="${f(new Date(y,m-2,1))}" aria-label="Mes anterior">‹</button><h3 style="margin:0;text-transform:capitalize">${mesNom(per)} ${y}</h3><button class="iconbtn" data-per="${f(new Date(y,m,1))}" aria-label="Mes siguiente">›</button></div>
+    <div class="mini"><div><b>${pesos(cobr)}</b><span>Cobrado</span></div><div><b>${pesos(pend)}</b><span>Pendiente</span></div><div><b>${rows.filter(x=>x.est==="pagado").length}/${rows.length}</b><span>Al día</span></div></div>
+    ${rows.length?`<section class="group">${rows.map(x=>`<div class="curow">
+      <div class="cun"><b>${esc(pName(x.p))}</b><small>${x.p.cuota_tipo==="socio"?"Socio":x.p.cuota_tipo==="nosocio"?"No socio":"Sin tipo de cuota"} · ${pesos(val(x))}${x.r&&x.r.confirmado_por&&x.est==="pagado"?` · confirmó ${esc(x.r.confirmado_por)}`:""}</small></div>
+      <span class="chip cu-${x.est}">${EST_TXT[x.est]}</span>
+      <div class="cuacts">${x.est==="avisado"?`<button class="pill accent sm" data-cuok="${esc(x.p.id)}">Confirmar pago</button>`:""}
+        ${x.est==="vencida"||x.est==="pendiente"?`<button class="pill ghost sm" data-cupay="${esc(x.p.id)}">Marcar pagado</button>${x.p.tel?`<a class="pill ghost sm" target="_blank" rel="noopener" href="${esc(waLink(x.p, per))}">Recordar por WhatsApp</a>`:""}`:""}
+        ${x.est==="pagado"||x.est==="avisado"?`<button class="del" data-cudel="${esc(x.p.id)}">Deshacer</button>`:""}</div></div>`).join("")}</section>`
+      :`<div class="empty"><b>Todavía no hay socios en Impulso</b><span class="hint">Aparecen acá cuando entran con el link de LiberGym.</span></div>`}`;
+}
+function bindCuotasPanel(root){
+  const per=ui.cuPer||periodoAct(), who=String(profile().nombre||"Profe").split(" ")[0];
+  root.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{ ui.cuPer=b.dataset.per; renderAll(); });
+  const act=async(fn,msg)=>{ try{ const {error}=await fn(); if(error) throw error; toast(msg); loadPlan(); }catch(e){ toast("No se pudo guardar"); } };
+  root.querySelectorAll("[data-cuok]").forEach(b=>b.onclick=()=>act(()=>SB.from("cuotas").update({estado:"pagado", pagado_at:new Date().toISOString(), confirmado_por:who}).eq("user_id",b.dataset.cuok).eq("periodo",per),"Pago confirmado"));
+  root.querySelectorAll("[data-cupay]").forEach(b=>b.onclick=()=>{ const p=team.players[b.dataset.cupay]; act(()=>SB.from("cuotas").insert({user_id:b.dataset.cupay, periodo:per, monto:montoDe(p), estado:"pagado", pagado_at:new Date().toISOString(), confirmado_por:who}),"Marcado como pagado"); });
+  root.querySelectorAll("[data-cudel]").forEach(b=>b.onclick=twoTap(b,"¿Deshacer?",()=>act(()=>SB.from("cuotas").delete().eq("user_id",b.dataset.cudel).eq("periodo",per),"Listo")));
+}
+
+/* Identidad de cada grupo (nombre, color y, en el gimnasio, link de pago, montos y vencimiento) */
+function teamIdentityHTML(g){
+  const c=GCFG(g), gym=(GRUPOS_DEF[g]||{}).tipo==="gym", mt=c.montos||{socio:25000,nosocio:40000};
+  return `<section class="group"><h3>Identidad de ${esc(c.nombre||g)}</h3><p class="hint">Así ven la app ${gym?"tus socios":"tus jugadoras"}: con este nombre y color.</p>
+    <label class="f">Nombre<input id="tmN" value="${esc(c.nombre||"")}" placeholder="${gym?"LiberGym":"Ej.: Libertad Básquet Femenino"}"></label>
+    <div class="swatches" role="radiogroup" aria-label="Color">${TEAM_COLORS.map(([n,col])=>`<button class="sw ${String(c.color||"#F0643C").toLowerCase()===col.toLowerCase()?"on":""}" data-col="${col}" style="--c:${col}" aria-label="${n}" title="${n}"></button>`).join("")}</div>
+    ${gym && CUOTAS_ON?`<label class="f">Link de pago de Mercado Pago<input id="tmL" type="url" inputmode="url" value="${esc(c.link_mp||"")}" placeholder="https://mpago.la/…"></label>
+      <div class="grid2"><label class="f">Cuota socio<div class="unitbox"><span>$</span><input id="tmS" type="number" inputmode="numeric" value="${mt.socio}"></div></label><label class="f">Cuota no socio<div class="unitbox"><span>$</span><input id="tmNS" type="number" inputmode="numeric" value="${mt.nosocio}"></div></label></div>
+      <label class="f">Vence el día<input id="tmV" type="number" inputmode="numeric" min="1" max="28" value="${c.vence||10}"></label>`:""}
+    <button class="pill accent" id="tmOk" style="justify-content:center">Guardar</button></section>`;
+}
+function bindTeamIdentity(root, g){
+  let col=GCFG(g).color||"#F0643C";
+  root.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>{ col=b.dataset.col; root.querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on",x===b)); });
+  const ok=root.querySelector("#tmOk"); if(!ok) return;
+  ok.onclick=async()=>{
+    const data=Object.assign({}, GR.list[g]||{}, {nombre:root.querySelector("#tmN").value.trim(), color:col});
+    const L=root.querySelector("#tmL");
+    if(L){ const l=L.value.trim(); if(l && !/^https:\/\//.test(l)){ toast("El link tiene que empezar con https://"); L.focus(); return; }
+      data.link_mp=l; data.montos={socio:num(root.querySelector("#tmS").value)||25000, nosocio:num(root.querySelector("#tmNS").value)||40000};
+      data.vence=Math.min(28,Math.max(1,num(root.querySelector("#tmV").value)||10)); }
+    try{ const {error}=await SB.from("grupos").upsert({id:g, data, updated_at:new Date().toISOString()}); if(error) throw error;
+      GR.list[g]=data; toast("Guardado"); renderAll(); }catch(e){ toast("No se pudo guardar"); }
+  };
+}
+
 function openOnbEquipo(){
   ui.onbShown=true;
   const st={nombre:((state.perfil.find(x=>x.id==="main")||{}).nombre)||ROLE.name||""};
@@ -2066,7 +2206,7 @@ function openOnbEquipo(){
       <label class="f">Nombre y apellido<input id="oeN" value="${esc(st.nombre)}" placeholder="Así te ven tus profes" autocomplete="name"></label>`;
     const n=$("#oeN"); n.oninput=e=>st.nombre=e.target.value; setTimeout(()=>n.focus(),100);
     $("#oeOk").onclick=async()=>{ if(!st.nombre.trim()){ toast("Escribí tu nombre y apellido"); n.focus(); return; }
-      await saveProfile({nombre:st.nombre.trim(), equipo:true, dep:"basquet", obj:"deporte", dias:3, onb:true}); closeSheet(); toast("¡Bienvenida al equipo!"); };
+      await saveProfile({nombre:st.nombre.trim(), equipo:true, grupo:"libertad", dep:"basquet", obj:"deporte", dias:3, onb:true}); closeSheet(); toast("¡Bienvenida al equipo!"); };
   }});
 }
 const restOf = e => e.desc || exInfo(e.nombre).descanso;
@@ -2078,18 +2218,20 @@ async function loadPlan(){
     PL.mine=PL.all[ME]||null;
     const {data:cq}=await SB.from("consultas").select("*"); PL.consultas=(cq||[]).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   }catch(e){}
+  try{ const {data:gs}=await SB.from("grupos").select("id,data"); if(gs){ GR.list={}; gs.forEach(r=>GR.list[r.id]=r.data||{}); } }catch(e){}
+  if(ROLE.coach){ try{ const {data:me}=await SB.from("coaches").select("user_id,grupos").eq("user_id",ME); GR.mis = me&&me[0] ? (me[0].grupos||null) : null; }catch(e){} }
+  try{ const {data:cu}=await SB.from("cuotas").select("*"); GR.cuotas=cu||[]; }catch(e){}
   PL.loaded=true; applyRole(); renderAll();
 }
 function watchPlan(){
   if(!SB) return; let t=null; const again=()=>{ clearTimeout(t); t=setTimeout(loadPlan,300); };
-  SB.channel("impulso-plan").on("postgres_changes",{event:"*",schema:"public",table:"planes"},again).on("postgres_changes",{event:"*",schema:"public",table:"consultas"},again).subscribe();
+  SB.channel("impulso-plan").on("postgres_changes",{event:"*",schema:"public",table:"planes"},again).on("postgres_changes",{event:"*",schema:"public",table:"consultas"},again).on("postgres_changes",{event:"*",schema:"public",table:"cuotas"},again).on("postgres_changes",{event:"*",schema:"public",table:"grupos"},again).subscribe();
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") again(); });
 }
 
 /* ---------- Vista de la jugadora ---------- */
 /* Identidad del equipo: la guardan los entrenadores; la ven las jugadoras */
 const TEAM_COLORS = [["Naranja","#F0643C"],["Rojo","#E5484D"],["Azul","#3E8EF7"],["Celeste","#2BB3C0"],["Verde","#30A46C"],["Violeta","#8E6CEF"],["Amarillo","#F5B83D"]];
-const TEAM = () => ((state.ejercicios||[]).find(x=>x.id==="__equipo")||{}).equipo || {};
 const DOW = () => { const d=new Date().getDay(); return d===0?7:d; };
 const DIAS_L = ["L","M","M","J","V","S","D"];
 function renderPlanView(v){
@@ -2112,7 +2254,7 @@ function renderPlanView(v){
       <button class="pill ${big?"accent":"dark"}" data-ps="${esc(s.id)}" style="justify-content:center">${ok?"Hacer de nuevo":"Empezar"}</button></article>`; };
   let body="";
   if(tab==="plan"){
-    body=`${P.lesion&&P.lesion.activa?`<div class="lesion"><b>Trabajo adaptado</b><span>${esc(P.lesion.nota||"Seguí las indicaciones de tus profes y avisá cualquier molestia.")}</span></div>`:""}
+    body=`${CUOTAS_ON && myGrupo()==="libergym"?cuotaCardHTML():""}${P.lesion&&P.lesion.activa?`<div class="lesion"><b>Trabajo adaptado</b><span>${esc(P.lesion.nota||"Seguí las indicaciones de tus profes y avisá cualquier molestia.")}</span></div>`:""}
       ${!ses.length?`<div class="pnote"><b>Tus profes están armando tu plan</b><span>Cuando esté listo aparece acá. Mientras tanto podés cargar tus minutos de juego y hacerles consultas.</span></div>`
         : hoyS ? sesCard(hoyS,true) : `<div class="pnote"><b>¡Semana completa! 💪</b><span>Hiciste todas las sesiones de tu plan. Si querés repetir alguna, está abajo.</span></div>`}
       <div class="wstrip" aria-label="Tu semana">${week}</div>
@@ -2130,25 +2272,12 @@ function renderPlanView(v){
   }
   v.innerHTML=`<section class="stack"><div class="intro"><p class="eyebrow">${tab==="plan"?"Tu plan":tab==="juego"?"Partidos y prácticas":"Tus profes"}</p><h2>${tab==="plan"?`Hola, ${nombre}`:tab==="juego"?"Minutos de juego":"Consultas al profe"}</h2></div>${body}</section>`;
   v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{ const s=ses.find(x=>x.id===b.dataset.ps); if(s) startPlanSes(s); });
+  if(CUOTAS_ON && myGrupo()==="libergym") bindCuotaCard(v);
   const j=$("#pJuego"); if(j) j.onclick=openJuego;
   const c=$("#pCons"); if(c) c.onclick=()=>openConsulta({});
   const lo=$("#logout"); if(lo) lo.onclick=twoTap(lo,"Tocá de nuevo para salir",signOut);
   document.querySelectorAll("[data-ptab]").forEach(b=>b.setAttribute("aria-current", b.dataset.ptab===tab?"page":"false"));
 }
-function teamIdentityHTML(){
-  const T=TEAM();
-  return `<section class="group"><h3>Identidad del equipo</h3><p class="hint">Así ven la app tus jugadoras: con el nombre y el color del equipo.</p>
-    <label class="f">Nombre del equipo<input id="tmN" value="${esc(T.nombre||"")}" placeholder="Ej.: Básquet Femenino Sunchales"></label>
-    <div class="swatches" role="radiogroup" aria-label="Color del equipo">${TEAM_COLORS.map(([n,c])=>`<button class="sw ${String(T.color||"#F0643C").toLowerCase()===c.toLowerCase()?"on":""}" data-col="${c}" style="--c:${c}" aria-label="${n}" title="${n}"></button>`).join("")}</div>
-    <button class="pill accent" id="tmOk" style="justify-content:center">Guardar identidad</button></section>`;
-}
-function bindTeamIdentity(root){
-  let col=TEAM().color||"#F0643C";
-  root.querySelectorAll("[data-col]").forEach(b=>b.onclick=()=>{ col=b.dataset.col; root.querySelectorAll("[data-col]").forEach(x=>x.classList.toggle("on",x===b)); });
-  const ok=root.querySelector("#tmOk"); if(ok) ok.onclick=async()=>{ const nombre=root.querySelector("#tmN").value.trim();
-    try{ await setDoc("ejercicios","__equipo",{equipo:{nombre, color:col}}); toast("Listo. Las jugadoras ya lo ven así."); }catch(e){ saveErr(e); } };
-}
-
 function startPlanSes(s){
   openSesion({fecha:today(), planSes:s.id, tpl:{key:"plan:"+s.id, nombre:s.nombre||"Sesión", cat:s.cat||["F"],
     items:(s.items||[]).map(x=>({n:x.n, s:x.s||3, r:x.t?(x.seg||30):x.r, t:!!x.t, desc:x.desc||null, nota:x.nota||""}))}});
@@ -2444,10 +2573,20 @@ function openFeedback(){
   document.body.appendChild(w); draw(); w.querySelector("#fbT").focus();
 }
 $("#fbBtn").onclick=openFeedback;
-const _renderAll=renderAll; renderAll=function(){ const pm=planMode(), T=TEAM(); document.body.classList.toggle("planmode", pm);
-  if(pm && T.color) document.documentElement.style.setProperty("--accent", T.color); else document.documentElement.style.removeProperty("--accent");
-  const tn=document.getElementById("teamName"); if(tn) tn.textContent=pm?(T.nombre||"Mi equipo"):"";
-  _renderAll(); fbCount(); fabState(); };
+const _renderAll=renderAll; renderAll=function(){ const pm=planMode(), g=myGrupo(), T=TEAM(), br=pm||!!g; document.body.classList.toggle("planmode", pm); document.body.classList.toggle("branded", br);
+  if(br && T.color) document.documentElement.style.setProperty("--accent", T.color); else document.documentElement.style.removeProperty("--accent");
+  const tn=document.getElementById("teamName"); if(tn) tn.textContent=br?(T.nombre||"Mi equipo"):"";
+  const jb=document.querySelector('[data-ptab="juego"]'); if(jb) jb.hidden = g!=="libertad";
+  if(ui.ptab==="juego" && g!=="libertad") ui.ptab="plan";
+  _renderAll(); fbCount(); fabState();
+  if(!ROLE.coach && SB && ME && perfilLoaded){ const v=document.getElementById("view");
+    if(g==="libergym"){
+      if(CUOTAS_ON){ if(!pm && ui.tab==="entrena"){ v.insertAdjacentHTML("afterbegin", cuotaCardHTML()); bindCuotaCard(v); }
+        if(profile().onb && !profile().cuota_tipo && !ui.cuotaAsked && !ui.sheet) setTimeout(()=>{ if(!ui.sheet) openCuotaSetup(); },300); }
+      else if(profile().onb && profile().grupo!=="libergym" && !ui.grpSet){ ui.grpSet=true; saveProfile({grupo:"libergym"}); } }
+    if(!g && !pm && ui.tab==="perfil"){ v.insertAdjacentHTML("beforeend", `<div class="stack" style="margin-top:12px"><button class="pill ghost" id="lgLink" style="justify-content:center">¿Entrenás en LiberGym? ${CUOTAS_ON?"Vinculá tu cuota":"Vinculate al gimnasio"}</button></div>`);
+      const b=document.getElementById("lgLink"); if(b) b.onclick=CUOTAS_ON?openCuotaSetup:twoTap(b,"Tocá de nuevo para vincularte",async()=>{ await saveProfile({grupo:"libergym"}); toast("¡Listo! Ya estás vinculado/a a LiberGym."); }); } }
+};
 document.querySelectorAll("[data-ptab]").forEach(b=>b.onclick=()=>{ ui.ptab=b.dataset.ptab; renderAll(); window.scrollTo(0,0); });
 
 lsRead();

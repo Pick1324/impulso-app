@@ -1,6 +1,6 @@
 // Impulso: guarda la app en el celular para que abra rápido y sin señal.
 // Al publicar cambios, subí el número de versión para que todos reciban la nueva.
-const VERSION = "impulso-v7";
+const VERSION = "impulso-v9";
 const SHELL = ["./", "./index.html", "./config.js", "./vendor/supabase.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 
